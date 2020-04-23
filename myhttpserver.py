@@ -1,21 +1,27 @@
 import socket
 import random, string
+import re
 
 class MyHttpServer:
 
     def __init__(self):
-        self.PORT = 8002
+        self.PORT = 8005
         self.HOST = '127.0.0.1'
         self.CRLF = "\r\n"
         self.BUFFER_SIZE = 1024
+        self.COOKIE_SIZE = 10
         self.session_dic = {}
     
     def createRandom(self, n):
         randlst = [random.choice(string.ascii_letters + string.digits) for i in range(n)]
         return ''.join(randlst)
 
-    def createResponse(self):
-        id_random = self.createRandom(10)
+    def createResponse(self, data):
+        if "Cookie" in data:
+            id_found = (re.search(r'id=([a-xA-Z0-9_]+)', data)).group()
+            id_register = id_found[3:]
+        else:
+            id_register = self.createRandom(self.COOKIE_SIZE)
         message_lists = [
                 'HTTP/1.1 200 OK',
                 'Date: Mon, 26 Mar 2018 04:07:56 GMT',
@@ -27,7 +33,7 @@ class MyHttpServer:
         send_message=""
         for message in message_lists:
             send_message += message+self.CRLF
-        send_message += self.get(id_random)
+        send_message += self.get(id_register)
         send_binary = send_message.encode()
         return send_binary
 
@@ -54,7 +60,8 @@ class MyHttpServer:
                     #データ取得
                     data = connection.recv(self.BUFFER_SIZE).decode()
                     print('data : {}, addr: {}'.format(data, client))
-                    connection.send(self.createResponse())
+                    connection.send(self.createResponse(data))
+                    print(self.session_dic)
                 finally:
                     connection.close()
 
