@@ -64,7 +64,6 @@ class MyHttpServerRequest(MyHttpServer):
         super().__init__()
         self.id = id_register
 
-    #以降はid確定の状態でdicから引っ張ってくる(引数には取らない，変数として)
     def session_get(self, key):
         if self.session_dic.get(self.id) is None:
             self.session_dic[self.id] = {'counter':0}
