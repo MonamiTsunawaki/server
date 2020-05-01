@@ -3,14 +3,14 @@ import random, string
 import re
 
 class MyHttpServer:
+    session_dic = {}
 
     def __init__(self):
-        self.PORT = 8005
+        self.PORT = 8008
         self.HOST = '127.0.0.1'
         self.CRLF = "\r\n"
         self.BUFFER_SIZE = 1024
         self.COOKIE_SIZE = 10
-        self.session_dic = {}
     
     def createRandom(self, n):
         randlst = [random.choice(string.ascii_letters + string.digits) for i in range(n)]
@@ -29,22 +29,16 @@ class MyHttpServer:
                 'Connection: keep-alive'
                 ]
 
-        # HTML = '<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head><body><h1>Visit count : {}</h1></body></html>'.format(visit_count)
         send_message=""
         for message in message_lists:
             send_message += message+self.CRLF
-        send_message += self.get(id_register)
+        send_message += 'Set-Cookie: id='
+        send_message += id_register
+        send_message += self.CRLF+self.CRLF
+        request = MyHttpServerRequest(id_register)
+        send_message += self.get(request)
         send_binary = send_message.encode()
         return send_binary
-
-    def session_get(self, id, key):
-        if self.session_dic.get(id) is None:
-            return None
-        else:
-            return (self.session_dic.get(id)).get(key)
-
-    def session_set(self, id, key, value):
-        self.session_dic[id][key] = value
 
     def start(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -65,5 +59,18 @@ class MyHttpServer:
                 finally:
                     connection.close()
 
-class HttpError:
-    pass
+class MyHttpServerRequest(MyHttpServer):
+    def __init__(self, id_register):
+        super().__init__()
+        self.id = id_register
+
+    #以降はid確定の状態でdicから引っ張ってくる(引数には取らない，変数として)
+    def session_get(self, key):
+        if self.session_dic.get(self.id) is None:
+            self.session_dic[self.id] = {'counter':0}
+            return None
+        else:
+            return (self.session_dic.get(self.id)).get(key)
+
+    def session_set(self, key, value):
+        self.session_dic[self.id][key] = value

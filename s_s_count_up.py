@@ -1,26 +1,23 @@
-from myhttpserver import MyHttpServer, HttpError
+from myhttpserver import MyHttpServer
 
 class CountUp(MyHttpServer):
 
     def __init__(self):
         super().__init__()
 
-    def get(self, id):
-        counter = self.session_get(id, 'counter')
+    def get(self, request):
+        counter = request.session_get('counter')
         if counter is None:
-            self.session_dic[id] = {'counter':0}
-        counter = self.session_get(id, 'counter')
+            counter = 0
         counter += 1
-        self.session_set(id, 'counter', counter)
-        send_cookie = 'Set-Cookie: id='
-        send_cookie += id
-        send_cookie += self.CRLF+self.CRLF
-        send_cookie += '<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head><body><h1>Hello, world!</h1> <p>You have visited this page for {0} times.</p></body></html>'.format(counter)
+        request.session_set('counter', counter)
+        print(self.session_dic)
+        send_cookie = '<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head><body><h1>Hello, world!</h1> <p>You have visited this page for {0} times.</p><form method="post"><button type="submit">post</button></body></html>'.format(counter)
         print(send_cookie)
         return send_cookie
 
     def post(self):
-        raise HttpError(405, 'Post method is not supported')
+        return '<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head><body><h1>post method used</h1></body></html>'
 
 
 if __name__ == '__main__':
